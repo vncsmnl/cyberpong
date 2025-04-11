@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberPong</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="grid-overlay"></div>
+    <div class="game-container">
+        <h1 class="text-5xl font-bold mb-4 neon-text">CYBERPONG</h1>
+
+        <div class="score-container">
+            <div class="score-box">
+                <h2 class="text-2xl neon-text">PLAYER</h2>
+                <p id="playerScore" class="text-4xl neon-text">0</p>
+            </div>
+            <div class="score-box">
+                <h2 class="text-2xl neon-text">CPU</h2>
+                <p id="cpuScore" class="text-4xl neon-text">0</p>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="500" class="neon-border mb-6"></canvas>
+
+        <div class="button-container">
+            <button id="startButton" class="px-6 py-2 neon-button pulse">START GAME</button>
+            <button id="resetButton" class="px-6 py-2 neon-button">RESET</button>
+        </div>
+
+        <div class="instructions">
+            <p>Use <span class="text-purple-400">UP/DOWN</span> arrows or <span class="text-purple-400">MOUSE</span> to
+                move</p>
+            <p>First to <span class="text-purple-400">10</span> points wins!</p>
+            <p class="text-xs mt-4">POWERED BY VNCSMNL</p>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+
+</html>
