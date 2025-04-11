@@ -12,6 +12,10 @@ A modern, cyberpunk-themed take on the classic Pong game, featuring neon aesthet
 - Modern visual effects and grid overlay
 - First to 10 points wins!
 
+## Screenshots
+
+![App Screenshot](./src/1.png)
+
 ## 🎯 How to Play
 
 1. Open `index.html` in a modern web browser
