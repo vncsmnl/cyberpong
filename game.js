@@ -4,8 +4,14 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.playerScoreElement = document.getElementById('playerScore');
         this.cpuScoreElement = document.getElementById('cpuScore');
+        this.player1Label = document.getElementById('player1Label');
+        this.player2Label = document.getElementById('player2Label');
         this.startButton = document.getElementById('startButton');
         this.resetButton = document.getElementById('resetButton');
+        this.pvpModeButton = document.getElementById('pvpMode');
+        this.pvcModeButton = document.getElementById('pvcMode');
+        this.pvcInstructions = document.getElementById('pvcInstructions');
+        this.pvpInstructions = document.getElementById('pvpInstructions');
 
         // Game constants
         this.paddleWidth = 15;
@@ -24,6 +30,7 @@ class Game {
         this.isMouseControl = false;
         this.particles = [];
         this.explosionColors = ['#00fffc', '#ff00ff', '#ffffff'];
+        this.isPvPMode = false; // New game mode state
 
         // Initialize game objects
         this.initGameObjects();
@@ -55,39 +62,95 @@ class Game {
             dx: this.initialBallSpeed,
             dy: this.initialBallSpeed
         };
-    }
-
-    setupEventListeners() {
+    } setupEventListeners() {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         document.addEventListener('keyup', (e) => this.handleKeyUp(e));
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
         this.startButton.addEventListener('click', () => this.startGame());
         this.resetButton.addEventListener('click', () => this.resetGame());
-    }
-
-    handleKeyDown(e) {
-        switch (e.key) {
-            case 'ArrowUp':
-                this.playerPaddle.dy = -this.paddleSpeed;
-                this.isMouseControl = false;
-                break;
-            case 'ArrowDown':
-                this.playerPaddle.dy = this.paddleSpeed;
-                this.isMouseControl = false;
-                break;
+        this.pvpModeButton.addEventListener('click', () => this.switchToPvP());
+        this.pvcModeButton.addEventListener('click', () => this.switchToPvC());
+    } handleKeyDown(e) {
+        if (this.isPvPMode) {
+            // PvP mode: Player 1 uses W/S, Player 2 uses Arrow Up/Down
+            switch (e.key.toLowerCase()) {
+                case 'w':
+                    this.playerPaddle.dy = -this.paddleSpeed;
+                    this.isMouseControl = false;
+                    break;
+                case 's':
+                    this.playerPaddle.dy = this.paddleSpeed;
+                    this.isMouseControl = false;
+                    break;
+                case 'arrowup':
+                    this.cpuPaddle.dy = -this.paddleSpeed;
+                    break;
+                case 'arrowdown':
+                    this.cpuPaddle.dy = this.paddleSpeed;
+                    break;
+            }
+        } else {
+            // PvC mode: Player uses Arrow Up/Down or mouse
+            switch (e.key) {
+                case 'ArrowUp':
+                    this.playerPaddle.dy = -this.paddleSpeed;
+                    this.isMouseControl = false;
+                    break;
+                case 'ArrowDown':
+                    this.playerPaddle.dy = this.paddleSpeed;
+                    this.isMouseControl = false;
+                    break;
+            }
+        }
+    } handleKeyUp(e) {
+        if (this.isPvPMode) {
+            // PvP mode key releases
+            if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 's') {
+                this.playerPaddle.dy = 0;
+            }
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                this.cpuPaddle.dy = 0;
+            }
+        } else {
+            // PvC mode key releases
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                this.playerPaddle.dy = 0;
+            }
+        }
+    } handleMouseMove(e) {
+        // Only allow mouse control in PvC mode
+        if (!this.isPvPMode) {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouseY = e.clientY - rect.top;
+            this.isMouseControl = true;
         }
     }
 
-    handleKeyUp(e) {
-        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-            this.playerPaddle.dy = 0;
-        }
+    switchToPvP() {
+        this.isPvPMode = true;
+        this.isMouseControl = false;
+        this.resetGame();
+
+        // Update UI
+        this.pvpModeButton.classList.add('active');
+        this.pvcModeButton.classList.remove('active');
+        this.player1Label.textContent = 'PLAYER 1';
+        this.player2Label.textContent = 'PLAYER 2';
+        this.pvcInstructions.classList.add('hidden');
+        this.pvpInstructions.classList.remove('hidden');
     }
 
-    handleMouseMove(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouseY = e.clientY - rect.top;
-        this.isMouseControl = true;
+    switchToPvC() {
+        this.isPvPMode = false;
+        this.resetGame();
+
+        // Update UI
+        this.pvcModeButton.classList.add('active');
+        this.pvpModeButton.classList.remove('active');
+        this.player1Label.textContent = 'PLAYER 1';
+        this.player2Label.textContent = 'CPU';
+        this.pvpInstructions.classList.add('hidden');
+        this.pvcInstructions.classList.remove('hidden');
     }
 
     drawPaddle(x, y, width, height, color) {
@@ -142,10 +205,13 @@ class Game {
         this.ctx.fillStyle = '#00fffc';
         this.ctx.font = '48px Orbitron';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 50);
-
-        this.ctx.font = '24px Orbitron';
-        const winner = this.playerScore > this.cpuScore ? 'PLAYER WINS!' : 'CPU WINS!';
+        this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 50); this.ctx.font = '24px Orbitron';
+        let winner;
+        if (this.isPvPMode) {
+            winner = this.playerScore > this.cpuScore ? 'PLAYER 1 WINS!' : 'PLAYER 2 WINS!';
+        } else {
+            winner = this.playerScore > this.cpuScore ? 'PLAYER WINS!' : 'CPU WINS!';
+        }
         this.ctx.fillText(winner, this.canvas.width / 2, this.canvas.height / 2 + 20);
 
         this.ctx.font = '16px Orbitron';
@@ -186,24 +252,26 @@ class Game {
             this.playerPaddle.y = this.mouseY - this.playerPaddle.height / 2;
         } else {
             this.playerPaddle.y += this.playerPaddle.dy;
-        }
-
-        // Boundary check for player paddle
+        }        // Boundary check for player paddle
         if (this.playerPaddle.y < 0) {
             this.playerPaddle.y = 0;
         } else if (this.playerPaddle.y + this.playerPaddle.height > this.canvas.height) {
             this.playerPaddle.y = this.canvas.height - this.playerPaddle.height;
         }
 
-        // Move CPU paddle (simple AI)
-        const cpuPaddleCenter = this.cpuPaddle.y + this.cpuPaddle.height / 2;
-        if (cpuPaddleCenter < this.ball.y - 10) {
-            this.cpuPaddle.dy = this.paddleSpeed * 0.7;
-        } else if (cpuPaddleCenter > this.ball.y + 10) {
-            this.cpuPaddle.dy = -this.paddleSpeed * 0.7;
-        } else {
-            this.cpuPaddle.dy = 0;
+        // Move CPU paddle (AI in PvC mode, Player 2 controls in PvP mode)
+        if (!this.isPvPMode) {
+            // AI control
+            const cpuPaddleCenter = this.cpuPaddle.y + this.cpuPaddle.height / 2;
+            if (cpuPaddleCenter < this.ball.y - 10) {
+                this.cpuPaddle.dy = this.paddleSpeed * 0.7;
+            } else if (cpuPaddleCenter > this.ball.y + 10) {
+                this.cpuPaddle.dy = -this.paddleSpeed * 0.7;
+            } else {
+                this.cpuPaddle.dy = 0;
+            }
         }
+        // In PvP mode, cpuPaddle.dy is controlled directly by key events
 
         this.cpuPaddle.y += this.cpuPaddle.dy;
 
@@ -284,14 +352,14 @@ class Game {
         setTimeout(() => {
             this.gameRunning = true;
         }, 1000);
-    }
-
-    resetGame() {
+    } resetGame() {
         this.playerScore = 0;
         this.cpuScore = 0;
         this.resetBall();
         this.playerPaddle.y = this.canvas.height / 2 - this.paddleHeight / 2;
+        this.playerPaddle.dy = 0; // Reset paddle movement
         this.cpuPaddle.y = this.canvas.height / 2 - this.paddleHeight / 2;
+        this.cpuPaddle.dy = 0; // Reset paddle movement
         this.gameRunning = false;
         this.gameOver = false;
         this.startButton.classList.add('pulse');
